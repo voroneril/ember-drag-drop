@@ -6,15 +6,15 @@ export default Ember.Component.extend(Droppable, {
   overrideClass: 'draggable-object-target',
   isOver: false,
 
-  handlePayload: function(payload, event) {
+  handlePayload: function(payload) {
     var obj = this.get('coordinator').getObject(payload,{target: this});
-    this.sendAction('action',obj,{target: this, event: event});
+    this.sendAction('action',obj,{target: this});
   },
 
   handleDrop: function(event) {
     var dataTransfer = event.dataTransfer;
     var payload = dataTransfer.getData("Text");
-    this.handlePayload(payload, event);
+    this.handlePayload(payload);
   },
 
   acceptDrop: function(event) {
@@ -26,12 +26,12 @@ export default Ember.Component.extend(Droppable, {
     if (!this.get('isOver')) {
       //only send once per hover event
       this.set('isOver', true);
-      this.sendAction('dragOverAction', event);
+      this.sendAction('dragOverAction', event,{target: this});
     }
   },
   handleDragOut: function(event) {
     this.set('isOver', false);
-    this.sendAction('dragOutAction', event);
+    this.sendAction('dragOutAction', event,{target: this});
   },
 
   click(e) {
