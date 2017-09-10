@@ -1,77 +1,100 @@
-/*global equal*/
 import Ember from 'ember';
-import { test, moduleForComponent } from 'ember-qunit';
+import {test, moduleForComponent} from 'ember-qunit';
 import Coordinator from '../../../models/coordinator';
-import MockDataTransfer from '../../helpers/data-transfer';
+import MockEvent from '../../helpers/mock-event';
 
-var Thing = Ember.Object.extend({});
+const Thing = Ember.Object.extend({});
 
-moduleForComponent("draggable-object","DraggableObjectComponent", {
+moduleForComponent("draggable-object", "DraggableObjectComponent", {
+  unit: true,
   needs: ['service:drag-coordinator'], //TODO: this should be an inject as needs will be deprecated
-  unit: true
 });
 
-test("dragStart", function() {
-  var thing = Thing.create({id: 1});
-  var coordinator = Coordinator.create();
+test("dragStart", function(assert) {
+  let thing       = Thing.create({ id: 1 }),
+      coordinator = Coordinator.create(),
+      component   = this.subject({ coordinator }),
+      event       = new MockEvent();
 
-  var s = this.subject({coordinator: coordinator});
-  s.set("content",thing);
+  component.set("content", thing);
 
-  var event = MockDataTransfer.makeMockEvent();
-  Ember.run(function() {
-    s.dragStart(event);
-  });
+  Ember.run(() => component.dragStart(event));
 
-  var keys = coordinator.get("objectMap").keys();
-  var hashId = Ember.A(keys).get("lastObject");
+  let keys   = coordinator.get("objectMap").keys(),
+      hashId = Ember.A(keys).get("lastObject"),
+      data   = event.dataTransfer.data;
 
-  var data = event.dataTransfer.get('data');
-  equal(data.dataType,"Text");
-  equal(data.payload,hashId);
+  assert.deepEqual(data, { "Text": hashId });
 });
 
-test("notified of drop", function() {
-  var thing = Thing.create({id: 1});
-  var coordinator = Coordinator.create();
+test("notified of drop", function(assert) {
+  let thing        = Thing.create({ id: 1 }),
+      coordinator  = Coordinator.create(),
+      props        = { coordinator, content: thing, action: "objectDropped" },
+      component    = this.subject(props),
+      content      = Ember.A(),
+      targetObject = {
+        objectDropped: function(obj) {
+          content.push(obj);
+        }
+      };
 
-  var s = this.subject({coordinator: coordinator, content: thing, action: "objectDropped"});
+  component.set("targetObject", targetObject);
 
-  var content = Ember.A();
-  var targetObject = {
-    objectDropped: function(obj) {
-      content.push(obj);
-    }
-  };
-  s.set("targetObject",targetObject);
-
-  var hashId = Ember.run(function() {
-    return coordinator.setObject(thing, {source: s});
+  let hashId = Ember.run(function() {
+    return coordinator.setObject(thing, { source: component });
   });
 
   coordinator.getObject(hashId);
-  equal(content.length,1);
+  assert.equal(content.length, 1);
 });
 
-test("drop callbacks", function() {
-  var thing = Thing.create({id: 1});
-  var coordinator = Coordinator.create();
+test("drop callbacks", function(assert) {
+  let thing        = Thing.create({ id: 1 }),
+      coordinator  = Coordinator.create(),
+      callbackArgs = [];
 
-  var callbackArgs = [];
-  coordinator.on("objectMoved", function(ops) {
-    callbackArgs.push(ops);
-  });
+  coordinator.on("objectMoved", (ops) => callbackArgs.push(ops));
 
-  var s = this.subject({coordinator: coordinator});
+  let component = this.subject({ coordinator });
 
-  var hashId = Ember.run(function() {
-    return coordinator.setObject(thing, {source: s});
+  let hashId = Ember.run(function() {
+    return coordinator.setObject(thing, { source: component });
   });
 
   coordinator.getObject(hashId);
 
-  equal(callbackArgs.length,1);
-  equal(callbackArgs[0].obj.get('id'),1);
+  assert.equal(callbackArgs.length, 1);
+  assert.equal(callbackArgs[0].obj.get('id'), 1);
+});
+
+test("dragStartHook", function(assert) {
+  assert.expect(1);
+  let thing       = Thing.create({ id: 1 }),
+      coordinator = Coordinator.create(),
+      component   = this.subject({ coordinator }),
+      event       = new MockEvent();
+
+  component.set("content", thing);
+
+  component.dragStartHook = () => assert.ok(true);
+
+  Ember.run(() => component.dragStart(event));
+});
+
+test("dragEndHook", function(assert) {
+  assert.expect(1);
+  let thing       = Thing.create({ id: 1 }),
+      coordinator = Coordinator.create(),
+      component   = this.subject({ coordinator }),
+      event       = new MockEvent();
+
+  component.set("content", thing);
+  component.set("isDraggingObject", true);
+
+  component.dragEndHook = () => assert.ok(true);
+
+  Ember.run(() => component.dragEnd(event));
 });
 
 // test("sim drag", function() {

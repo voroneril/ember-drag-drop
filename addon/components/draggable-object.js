@@ -31,19 +31,21 @@ export default Ember.Component.extend({
   },
 
   didInsertElement() {
-    let self = this;
-    //if there is a drag handle watch the mouse up and down events to trigger if drag is allowed
-    if (this.get('dragHandle')) {
-      //only start when drag handle is activated
-      if (this.$(this.get('dragHandle'))) {
-        this.$(this.get('dragHandle')).on('mouseover', function(){
-          self.set('dragReady', true);
-        });
-        this.$(this.get('dragHandle')).on('mouseout', function(){
-          self.set('dragReady', false);
-        });
+    Ember.run.scheduleOnce('afterRender', ()=> {
+      let self = this;
+      //if there is a drag handle watch the mouse up and down events to trigger if drag is allowed
+      if (this.get('dragHandle')) {
+        //only start when drag handle is activated
+        if (this.$(this.get('dragHandle'))) {
+          this.$(this.get('dragHandle')).on('mouseover', function(){
+            self.set('dragReady', true);
+          });
+          this.$(this.get('dragHandle')).on('mouseout', function(){
+            self.set('dragReady', false);
+          });
+        }
       }
-    }
+    });
   },
 
   willDestroyElement(){
@@ -73,7 +75,16 @@ export default Ember.Component.extend({
       Ember.set(obj, 'isDraggingObject', true);
     }
     this.set('isDraggingObject', true);
-    this.get('dragCoordinator').dragStarted(obj, event, this);
+    if (!this.get('dragCoordinator.enableSort') && this.get('dragCoordinator.sortComponentController')) {
+      //disable drag if sorting is disabled this is not used for regular
+      event.preventDefault();
+      return;
+    } else {
+      Ember.run.later(()=> {
+        this.dragStartHook(event);
+      });
+      this.get('dragCoordinator').dragStarted(obj, event, this);
+    }
     this.sendAction('dragStartAction', obj, event);
     if (this.get('isSortable')) {
       this.sendAction('draggingSortItem', obj, event);
@@ -91,7 +102,8 @@ export default Ember.Component.extend({
       Ember.set(obj, 'isDraggingObject', false);
     }
     this.set('isDraggingObject', false);
-    this.get('dragCoordinator').dragEnded(event);
+    this.dragEndHook(event);
+    this.get('dragCoordinator').dragEnded();
     this.sendAction('dragEndAction', obj, event);
     if (this.get('dragHandle')) {
       this.set('dragReady', false);
@@ -107,6 +119,14 @@ export default Ember.Component.extend({
      this.get('dragCoordinator').draggingOver(event, this);
    }
     return false;
+  },
+
+  dragStartHook(event) {
+    Ember.$(event.target).css('opacity', '0.5');
+  },
+
+  dragEndHook(event) {
+    Ember.$(event.target).css('opacity', '1');
   },
 
   drop(event) {

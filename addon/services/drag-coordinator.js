@@ -1,5 +1,21 @@
 import Ember from 'ember';
 
+function swapInPlace(items, a, b) {
+  const aPos = items.indexOf(a);
+  const bPos = items.indexOf(b);
+
+  items.replace(aPos, 1, [ b ]);
+  items.replace(bPos, 1, [ a ]);
+}
+
+function shiftInPlace(items, a, b) {
+  const aPos = items.indexOf(a);
+  const bPos = items.indexOf(b);
+
+  items.removeAt(aPos);
+  items.insertAt(bPos, a);
+}
+
 export default Ember.Service.extend({
   sortComponentController: null,
   currentDragObject: null,
@@ -13,6 +29,8 @@ export default Ember.Service.extend({
   arrayList: Ember.computed.alias('sortComponentController.sortableObjectList'),
   enableSort: Ember.computed.alias('sortComponentController.enableSort'),
   useSwap: Ember.computed.alias('sortComponentController.useSwap'),
+  inPlace: Ember.computed.alias('sortComponentController.inPlace'),
+
   pushSortComponent(component) {
     const sortingScope = component.get('sortingScope');
     if (!this.get('sortComponents')[sortingScope]) {
@@ -27,22 +45,13 @@ export default Ember.Service.extend({
   },
 
   dragStarted(object, event, emberObject) {
-    if (!this.get('enableSort') && this.get('sortComponentController')) {
-      //disable drag if sorting is disabled this is not used for regular
-      event.preventDefault();
-      return;
-    }
-    Ember.run.later(function() {
-      Ember.$(event.target).css('opacity', '0.5');
-    });
     this.set('currentDragObject', object);
     this.set('currentDragEvent', event);
     this.set('currentDragItem', emberObject);
     event.dataTransfer.effectAllowed = 'move';
   },
 
-  dragEnded(event) {
-    Ember.$(event.target).css('opacity', '1');
+  dragEnded() {
     this.set('currentDragObject', null);
     this.set('currentDragEvent', null);
     this.set('currentDragItem', null);
@@ -100,39 +109,20 @@ export default Ember.Service.extend({
 
     if (swap) {
 
-      if (this.get('useSwap')) {
-        //use swap algorithm
-        // Swap if items are in the same sortable-objects component
-        const newList = aSortable.get('sortableObjectList').toArray();
-        const newArray = Ember.A();
-        const aPos = newList.indexOf(a);
-        const bPos = newList.indexOf(b);
-
-        newList[aPos] = b;
-        newList[bPos] = a;
-
-        newList.forEach(function(item) {
-          newArray.push(item);
-        });
-        aSortable.set('sortableObjectList', newArray);
-
-      } else {
-        //use shift algorithm
-        const newList = aSortable.get('sortableObjectList').toArray();
-        var newArray = Ember.A();
-        var aPos = newList.indexOf(a);
-        var bPos = newList.indexOf(b);
-
-        newList.splice(aPos, 1);
-        newList.splice(bPos, 0, a);
-
-        newList.forEach(function(item){
-          newArray.push(item);
-        });
-
-        aSortable.set('sortableObjectList', newArray);
+      let list = aSortable.get('sortableObjectList');
+      if (!this.get('inPlace')) {
+        list = list.toArray();
       }
 
+      if (this.get('useSwap')) {
+        swapInPlace(list, a, b);
+      } else {
+        shiftInPlace(list, a, b);
+      }
+
+      if (!this.get('inPlace')) {
+        aSortable.set('sortableObjectList', list);
+      }
 
     } else {
       // Move if items are in different sortable-objects component

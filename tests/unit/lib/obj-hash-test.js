@@ -1,20 +1,18 @@
-/* global equal, module*/
 import Ember from 'ember';
-import { test } from 'ember-qunit';
+import {test, module} from 'ember-qunit';
 import ObjHash from '../../../models/obj-hash';
 
 module("obj hash");
 
-test("smoke", function() {
-  var hash = ObjHash.create();
-  var obj = 8;
+test("smoke", function(assert) {
+  let hash = ObjHash.create(),
+      obj  = 8,
+      id   = null;
 
-  var id = null;
-  Ember.run(function() {
-    id = hash.add(obj);
-  });
-  equal(hash.get('length'),1);
+  Ember.run(() => id = hash.add(obj));
 
-  var objBack = hash.getObj(id);
-  equal(obj,objBack);
+  assert.equal(hash.get('length'), 1);
+
+  let objBack = hash.getObj(id);
+  assert.equal(obj, objBack);
 });

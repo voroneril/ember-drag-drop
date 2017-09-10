@@ -13,6 +13,10 @@
     <link rel="stylesheet" href="{{rootURL}}assets/vendor.css">
     <link rel="stylesheet" href="{{rootURL}}assets/dummy.css">
     <link rel="stylesheet" href="{{rootURL}}assets/test-support.css">
+    <style>
+      html { position: relative; overflow: auto; }
+      #ember-testing-container { position: fixed !important; bottom: 0px; right: 0px }
+    </style>
 
     {{content-for "head-footer"}}
     {{content-for "test-head-footer"}}
@@ -21,7 +25,7 @@
     {{content-for "body"}}
     {{content-for "test-body"}}
 
-    <script src="{{rootURL}}testem.js" integrity=""></script>
+    <script src="/testem.js" integrity=""></script>
     <script src="{{rootURL}}assets/vendor.js"></script>
     <script src="{{rootURL}}assets/test-support.js"></script>
     <script src="{{rootURL}}assets/dummy.js"></script>

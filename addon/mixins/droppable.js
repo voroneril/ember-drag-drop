@@ -69,13 +69,13 @@ var Droppable = Ember.Mixin.create({
    * @public
    */
 
-  acceptDrop: Ember.K,
+  acceptDrop() {},
 
-  handleDragOver: Ember.K,
-  handleDragOut: Ember.K,
+  handleDragOver() {},
+  handleDragOut() {},
 
   /**
-   * @method _handleDragOver
+   * @method dragOver
    * @private
    */
 
@@ -92,6 +92,15 @@ var Droppable = Ember.Mixin.create({
     } else {
       this._resetDroppability();
     }
+  },
+
+  /**
+   * @method dragEnter
+   * @private
+   */
+
+  dragEnter: function() {
+    return false;
   },
 
   /**

@@ -7,10 +7,12 @@ export default Ember.Component.extend( {
   classNameBindings: ['overrideClass'],
   enableSort: true,
   useSwap: true,
+  inPlace: false,
   sortingScope: 'drag-objects',
   sortableObjectList: Ember.A(),
 
-  didInsertElement() {
+  init() {
+    this._super(...arguments);
     if (this.get('enableSort')) {
       this.get('dragCoordinator').pushSortComponent(this);
     }
@@ -22,18 +24,28 @@ export default Ember.Component.extend( {
     }
   },
 
-  dragStart: function() {
+  dragStart: function(event) {
+    event.stopPropagation();
     if (!this.get('enableSort')) {
       return false;
     }
+    this.set('dragCoordinator.sortComponentController', this);
   },
 
-  dragOver: function() {
+  dragEnter: function(event) {
     //needed so drop event will fire
+    event.stopPropagation();
+    return false;
+  },
+
+  dragOver: function(event) {
+    //needed so drop event will fire
+    event.stopPropagation();
     return false;
   },
 
   drop: function(event) {
+    event.stopPropagation();
     if (this.get('enableSort')) {
       this.sendAction('sortEndAction', event);
     }
