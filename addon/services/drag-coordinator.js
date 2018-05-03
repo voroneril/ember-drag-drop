@@ -1,4 +1,6 @@
-import Ember from 'ember';
+import Service from '@ember/service';
+import { alias } from '@ember/object/computed';
+import { A } from '@ember/array';
 
 function swapInPlace(items, a, b) {
   const aPos = items.indexOf(a);
@@ -16,7 +18,7 @@ function shiftInPlace(items, a, b) {
   items.insertAt(bPos, a);
 }
 
-export default Ember.Service.extend({
+export default Service.extend({
   sortComponentController: null,
   currentDragObject: null,
   currentDragEvent: null,
@@ -24,17 +26,22 @@ export default Ember.Service.extend({
   currentOffsetItem: null,
   isMoving: false,
   lastEvent: null,
-  sortComponents: {}, // Use object for sortComponents so that we can scope per sortingScope
 
-  arrayList: Ember.computed.alias('sortComponentController.sortableObjectList'),
-  enableSort: Ember.computed.alias('sortComponentController.enableSort'),
-  useSwap: Ember.computed.alias('sortComponentController.useSwap'),
-  inPlace: Ember.computed.alias('sortComponentController.inPlace'),
+  init() {
+    this._super(...arguments);
+    // Use object for sortComponents so that we can scope per sortingScope
+    this.set('sortComponents', {});
+  },
+
+  arrayList: alias('sortComponentController.sortableObjectList'),
+  enableSort: alias('sortComponentController.enableSort'),
+  useSwap: alias('sortComponentController.useSwap'),
+  inPlace: alias('sortComponentController.inPlace'),
 
   pushSortComponent(component) {
     const sortingScope = component.get('sortingScope');
     if (!this.get('sortComponents')[sortingScope]) {
-      this.get('sortComponents')[sortingScope] = Ember.A();
+      this.get('sortComponents')[sortingScope] = A();
     }
     this.get('sortComponents')[sortingScope].pushObject(component);
   },
@@ -62,26 +69,36 @@ export default Ember.Service.extend({
     const currentOffsetItem = this.get('currentOffsetItem');
     const pos = this.relativeClientPosition(emberObject.$()[0], event);
     const hasSameSortingScope = this.get('currentDragItem.sortingScope') === emberObject.get('sortingScope');
-    let moveDirection = false;
+    let moveDirections = [];
 
     if (!this.get('lastEvent')) {
       this.set('lastEvent', event);
     }
 
     if (event.originalEvent.clientY < this.get('lastEvent').originalEvent.clientY) {
-      moveDirection = 'up';
+      moveDirections.push('up');
     }
 
     if (event.originalEvent.clientY > this.get('lastEvent').originalEvent.clientY) {
-      moveDirection = 'down';
+      moveDirections.push('down');
     }
+
+    if (event.originalEvent.clientX < this.get('lastEvent').originalEvent.clientX) {
+      moveDirections.push('left');
+    }
+
+    if (event.originalEvent.clientX > this.get('lastEvent').originalEvent.clientX) {
+      moveDirections.push('right');
 
     this.set('lastEvent', event);
 
     if (!this.get('isMoving')) {
       if (event.target !== this.get('currentDragEvent').target && hasSameSortingScope) { //if not dragging over self
         if (currentOffsetItem !== emberObject) {
-          if (pos.py > 0.33 && moveDirection === 'up' || pos.py > 0.33 && moveDirection === 'down') {
+          if (pos.py < 0.67 && moveDirections.indexOf('up') >= 0 ||
+              pos.py > 0.33 && moveDirections.indexOf('down') >= 0 ||
+              pos.px < 0.67 && moveDirections.indexOf('left') >= 0 ||
+              pos.px > 0.33 && moveDirections.indexOf('right') >= 0) {
 
             this.moveElements(emberObject);
             this.set('currentOffsetItem', emberObject);

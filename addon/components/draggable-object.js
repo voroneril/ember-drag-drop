@@ -13,14 +13,9 @@ export default Ember.Component.extend({
   title: Ember.computed.alias('content.title'),
 
   draggable: Ember.computed('isDraggable', function() {
-    var isDraggable = this.get('isDraggable');
+    let isDraggable = this.get('isDraggable');
 
-    if (isDraggable) {
-      return true;
-    }
-    else {
-      return null;
-    }
+    return isDraggable || null;
   }),
 
   init() {
@@ -51,6 +46,9 @@ export default Ember.Component.extend({
   willDestroyElement(){
     if (this.$(this.get('dragHandle'))) {
       this.$(this.get('dragHandle')).off();
+    }
+    if (this.get('isDraggingObject')) {
+      this.get('dragCoordinator').dragEnded();
     }
   },
 

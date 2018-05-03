@@ -1,15 +1,16 @@
-import Ember from 'ember';
+import Component from '@ember/component';
+import { inject as service } from '@ember/service';
+import { A } from '@ember/array';
 
-export default Ember.Component.extend( {
-  dragCoordinator: Ember.inject.service(),
-  tagName: 'div',
+export default Component.extend( {
+  dragCoordinator: service(),
   overrideClass: 'sortable-objects',
   classNameBindings: ['overrideClass'],
   enableSort: true,
   useSwap: true,
   inPlace: false,
   sortingScope: 'drag-objects',
-  sortableObjectList: Ember.A(),
+  sortableObjectList: A(),
 
   init() {
     this._super(...arguments);
@@ -24,7 +25,7 @@ export default Ember.Component.extend( {
     }
   },
 
-  dragStart: function(event) {
+  dragStart(event) {
     event.stopPropagation();
     if (!this.get('enableSort')) {
       return false;
@@ -32,22 +33,22 @@ export default Ember.Component.extend( {
     this.set('dragCoordinator.sortComponentController', this);
   },
 
-  dragEnter: function(event) {
+  dragEnter(event) {
     //needed so drop event will fire
     event.stopPropagation();
     return false;
   },
 
-  dragOver: function(event) {
+  dragOver(event) {
     //needed so drop event will fire
     event.stopPropagation();
     return false;
   },
 
-  drop: function(event) {
+  drop(event) {
     event.stopPropagation();
-    if (this.get('enableSort')) {
-      this.sendAction('sortEndAction', event);
+    if (this.get('enableSort') && this.get('sortEndAction')) {
+      this.get('sortEndAction')(event);
     }
   }
 });

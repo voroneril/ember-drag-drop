@@ -1,6 +1,7 @@
-import Ember from 'ember';
+import Component from '@ember/component';
+import { A } from '@ember/array';
 
-var removeOne = function(arr,obj) {
+function removeOne(arr,obj) {
   var l = arr.get('length');
   arr.removeObject(obj);
   var l2 = arr.get('length');
@@ -8,34 +9,33 @@ var removeOne = function(arr,obj) {
   if (l-1 !== l2) {
     throw "bad length " + l + " " + l2;
   }
-};
+}
 
-export default Ember.Component.extend( {
-  model: Ember.A(),
+export default Component.extend( {
+  model: A(),
   classNames: ['draggable-object-bin'],
 
   manageList: true,
 
-  objectMoved: function() {
+  objectMoved() {
   },
 
   actions: {
-    handleObjectDropped: function(obj) {
+    handleObjectDropped(obj) {
       if (this.get('manageList')) {
         this.get("model").pushObject(obj);
       }
 
       this.trigger("objectDroppedInternal",obj);
-      this.sendAction("objectDropped",{obj: obj, bin: this});
+      this.get('objectDropped')({obj: obj, bin: this});
     },
 
-    handleObjectDragged: function(obj) {
+    handleObjectDragged(obj) {
       if (this.get('manageList')) {
         removeOne(this.get('model'),obj);
       }
       this.trigger("objectDraggedInternal",obj);
-      this.sendAction("objectDragged");
-
+      this.get('objectDragged')();
     }
   }
 });
