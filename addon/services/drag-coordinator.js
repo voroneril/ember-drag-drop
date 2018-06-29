@@ -89,7 +89,8 @@ export default Service.extend({
 
     if (event.originalEvent.clientX > this.get('lastEvent').originalEvent.clientX) {
       moveDirections.push('right');
-
+    }
+    
     this.set('lastEvent', event);
 
     if (!this.get('isMoving')) {
